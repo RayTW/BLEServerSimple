@@ -23,8 +23,10 @@ public class AdvertiseAdaptor extends AdvertiseCallback {
     private static final String TAG = AdvertiseAdaptor.class.getSimpleName();
 
     //UUID
-    private static final String SERVICE_UUID_YOU_CAN_CHANGE = "5275fef2-72fb-4275-84d7-7fd44a160161";
-    private static final String CHAR_UUID_YOU_CAN_CHANGE = "9ca2f07a-6cb9-4fc7-b168-f83662bc5abb";
+    private static final String SERVICE_UUID = "5275fef2-72fb-4275-84d7-7fd44a160161";
+    private static final String CHAR_UUID_READ = "9ca2f07a-6cb9-4fc7-b168-f83662bc5abb";
+    private static final String CHAR_UUID_WRITE = "45d9d1b2-594c-49e2-b1c8-964dbe886e40";
+    private static final String CHAR_UUID_NOTIFY = "a03301da-c375-4dd5-854e-d2d28f00f82e";
 
     //Advertiser設定
     private static final boolean CONNECTABLE = true;
@@ -86,18 +88,29 @@ public class AdvertiseAdaptor extends AdvertiseCallback {
     private void initService() {
         //serviceUUID設定
         BluetoothGattService service = new BluetoothGattService(
-                UUID.fromString(SERVICE_UUID_YOU_CAN_CHANGE),
+                UUID.fromString(SERVICE_UUID),
                 BluetoothGattService.SERVICE_TYPE_PRIMARY);
 
         //characteristicUUID設定
-        BluetoothGattCharacteristic characteristic = new BluetoothGattCharacteristic(
-                UUID.fromString(CHAR_UUID_YOU_CAN_CHANGE),
-                BluetoothGattCharacteristic.PROPERTY_READ |
-                        BluetoothGattCharacteristic.PROPERTY_WRITE,
-                BluetoothGattCharacteristic.PERMISSION_READ |
-                        BluetoothGattCharacteristic.PERMISSION_WRITE);
+        BluetoothGattCharacteristic characteristicRead = new BluetoothGattCharacteristic(
+                UUID.fromString(CHAR_UUID_READ),
+                BluetoothGattCharacteristic.PROPERTY_READ,
+                BluetoothGattCharacteristic.PERMISSION_READ_ENCRYPTED);
+        service.addCharacteristic(characteristicRead);
 
-        service.addCharacteristic(characteristic);
+        BluetoothGattCharacteristic characteristicWrite = new BluetoothGattCharacteristic(
+                UUID.fromString(CHAR_UUID_WRITE),
+                BluetoothGattCharacteristic.PROPERTY_WRITE,
+                BluetoothGattCharacteristic.PERMISSION_WRITE_ENCRYPTED);
+
+        service.addCharacteristic(characteristicWrite);
+
+        BluetoothGattCharacteristic characteristicNotify = new BluetoothGattCharacteristic(
+                UUID.fromString(CHAR_UUID_NOTIFY),
+                BluetoothGattCharacteristic.PROPERTY_NOTIFY,
+                BluetoothGattCharacteristic.PERMISSION_READ_ENCRYPTED);
+
+        service.addCharacteristic(characteristicNotify);
 
         gattServer.addService(service);
     }
@@ -124,7 +137,7 @@ public class AdvertiseAdaptor extends AdvertiseCallback {
 
         AdvertiseData.Builder builder = new AdvertiseData.Builder();
         //加入自定的service uuid
-        builder.addServiceUuid(new ParcelUuid(UUID.fromString(SERVICE_UUID_YOU_CAN_CHANGE)));
+        builder.addServiceUuid(new ParcelUuid(UUID.fromString(SERVICE_UUID)));
 
         //設定用device name顯示為ble的local name
         builder.setIncludeDeviceName(true);
