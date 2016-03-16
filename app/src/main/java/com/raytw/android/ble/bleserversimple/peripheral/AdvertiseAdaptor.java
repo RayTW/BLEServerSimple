@@ -1,4 +1,4 @@
-package com.raytw.android.ble.bleserversimple; /**
+package com.raytw.android.ble.bleserversimple.peripheral; /**
  * Created by leeray on 16/3/16.
  */
 import android.annotation.TargetApi;

@@ -32,6 +32,22 @@ public class MainActivity extends Activity {
                 BLEManager.getInstance(MainActivity.this).stopAdvertiseJP();
             }
         });
+
+        findViewById(R.id.startScan).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                BLEManager.getInstance(MainActivity.this).getLEScan().stopLeScan();
+                BLEManager.getInstance(MainActivity.this).getLEScan().startLeScan();
+            }
+        });
+
+        findViewById(R.id.stopScan).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                BLEManager.getInstance(MainActivity.this).getLEScan().stopLeScan();
+            }
+        });
     }
 
     @Override
