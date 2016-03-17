@@ -14,7 +14,7 @@ import com.raytw.android.ble.bleserversimple.peripheral.AdvertiseAdaptor;
  */
 public class BLEManager {
     private static BLEManager instance;
-    private AdvertiseAdaptor mAdvertiseAdaptorJP = new AdvertiseAdaptor();
+    private AdvertiseAdaptor mAdvertiseAdaptor;
     private LEScan mLEScan;
     private Context mContext;
 
@@ -40,18 +40,15 @@ public class BLEManager {
 
     private void initialize() {
         mLEScan = new LEScan(mContext);
+        mAdvertiseAdaptor = new AdvertiseAdaptor(mContext);
     }
 
-    public void startAdvertiseJP(){
-        mAdvertiseAdaptorJP.startAdvertise(mContext);
+    public AdvertiseAdaptor getAdvertiseAdaptor(){
+        return mAdvertiseAdaptor;
     }
 
     public LEScan getLEScan(){
         return mLEScan;
-    }
-
-    public void stopAdvertiseJP(){
-        mAdvertiseAdaptorJP.stopAdvertise();
     }
 
     public void checkBLE(Activity activity, int requestCode){

@@ -27,8 +27,8 @@ public class MainActivity extends Activity {
         findViewById(R.id.startAdvertise).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                BLEManager.getInstance(MainActivity.this).stopAdvertiseJP();
-                BLEManager.getInstance(MainActivity.this).startAdvertiseJP();
+                BLEManager.getInstance(MainActivity.this).getAdvertiseAdaptor().stopAdvertise();
+                BLEManager.getInstance(MainActivity.this).getAdvertiseAdaptor().startAdvertise();
             }
         });
 
@@ -36,7 +36,7 @@ public class MainActivity extends Activity {
             @Override
             public void onClick(View view) {
 
-                BLEManager.getInstance(MainActivity.this).stopAdvertiseJP();
+                BLEManager.getInstance(MainActivity.this).getAdvertiseAdaptor().stopAdvertise();
             }
         });
 
@@ -79,7 +79,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        BLEManager.getInstance(MainActivity.this).stopAdvertiseJP();
+        BLEManager.getInstance(MainActivity.this).getAdvertiseAdaptor().stopAdvertise();
     }
 
     private PermissionsRequest buildPermissionsRequest() {

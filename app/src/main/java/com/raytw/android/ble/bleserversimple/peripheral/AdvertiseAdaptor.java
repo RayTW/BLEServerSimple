@@ -34,16 +34,21 @@ public class AdvertiseAdaptor extends AdvertiseCallback {
 
     private BluetoothLeAdvertiser advertiser;
     private BluetoothGattServer gattServer;
+    private Context mContext;
+
+    public AdvertiseAdaptor(Context context){
+        mContext = context;
+    }
 
     //設定Advertiser & 開始
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    public void startAdvertise(Context context) {
+    public void startAdvertise() {
 
         //BLE設定,Advertiser負責廣播被其他裝置搜尋,GattServer負責連線上後的資料傳輸
-        BluetoothManager manager = (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
+        BluetoothManager manager = (BluetoothManager) mContext.getSystemService(Context.BLUETOOTH_SERVICE);
         BluetoothAdapter adapter = manager.getAdapter();
         advertiser = getAdvertiser(adapter);
-        gattServer = getGattServer(context, manager);
+        gattServer = getGattServer(mContext, manager);
         Log.d(TAG, "gattServer=>" + gattServer);
         //初始化gatt server底下的service、service下放入Characteristic
         initService();
