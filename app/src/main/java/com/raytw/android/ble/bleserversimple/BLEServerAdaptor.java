@@ -1,24 +1,32 @@
 package com.raytw.android.ble.bleserversimple; /**
  * Created by leeray on 16/3/16.
  */
+
 import android.annotation.TargetApi;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
+import android.bluetooth.BluetoothGattCallback;
+import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattServer;
 import android.bluetooth.BluetoothGattServerCallback;
-import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
+import android.bluetooth.BluetoothProfile;
+import android.content.Context;
 import android.os.Build;
 import android.util.Log;
+
+import java.util.List;
 
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
 public class BLEServerAdaptor extends BluetoothGattServerCallback {
     private static String TAG = BLEServerAdaptor.class.getSimpleName();
 
-    private BluetoothGattServer bluetoothGattServer;
-    public BLEServerAdaptor() {
+    private Context mContext;
 
+    private BluetoothGattServer bluetoothGattServer;
+    public BLEServerAdaptor(Context context) {
+        mContext = context;
     }
 
     public void setBluetoothGattServer(BluetoothGattServer gattServer){
@@ -26,8 +34,43 @@ public class BLEServerAdaptor extends BluetoothGattServerCallback {
     }
 
     @Override
-    public void onConnectionStateChange(BluetoothDevice device, int status, int newState) {
+    public void onConnectionStateChange(final BluetoothDevice device, int status, int newState) {
         super.onConnectionStateChange(device, status, newState);
+
+        device.connectGatt(mContext, true, new BluetoothGattCallback(){
+
+            @Override
+            public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
+                super.onConnectionStateChange(gatt, status, newState);
+
+                if (newState == BluetoothProfile.STATE_CONNECTED
+                        && status == BluetoothGatt.GATT_SUCCESS) {
+                    printLog("STATE_CONNECTED");
+                    printLog("start discover service");
+
+                    gatt.discoverServices();
+
+                } else if (newState == BluetoothProfile.STATE_DISCONNECTED){
+                    printLog("STATE_DISCONNECTED");
+                }
+            }
+
+            @Override
+            public void onServicesDiscovered(BluetoothGatt gatt, int status) {
+                printLog("onServicesDiscovered---gatt--->" + gatt);
+
+                if(gatt != null){
+                    List<BluetoothGattService> list =  gatt.getServices();
+                    printLog("onServicesDiscovered---serviceSize--->" + list.size());
+                    printLog("onServicesDiscovered---begin---");
+                    for(BluetoothGattService service : list){
+                        printLog( "suuid->" + service.getUuid());
+                    }
+                    printLog("onServicesDiscovered---end---");
+                }
+
+            }
+        });
     }
 
     @Override
@@ -93,5 +136,9 @@ public class BLEServerAdaptor extends BluetoothGattServerCallback {
             hexChars[j * 2 + 1] = hexArray[v & 0x0F];
         }
         return new String(hexChars);
+    }
+
+    private void printLog(String text){
+        BLEManager.getInstance(mContext).setBLELog(text);
     }
 }

@@ -23,7 +23,7 @@ public class AdvertiseAdaptor extends AdvertiseCallback {
     private static final String TAG = AdvertiseAdaptor.class.getSimpleName();
 
     //UUID
-    private static final String SERVICE_UUID = "5275fef2-72fb-4275-84d7-7fd44a160161";
+    private static final String SERVICE_UUID = "82C447C1-D914-4259-A8B7-2A9B042348BC";
     private static final String CHAR_UUID_READ = "9ca2f07a-6cb9-4fc7-b168-f83662bc5abb";
     private static final String CHAR_UUID_WRITE = "45d9d1b2-594c-49e2-b1c8-964dbe886e40";
     private static final String CHAR_UUID_NOTIFY = "a03301da-c375-4dd5-854e-d2d28f00f82e";
@@ -34,28 +34,35 @@ public class AdvertiseAdaptor extends AdvertiseCallback {
 
     private BluetoothLeAdvertiser advertiser;
     private BluetoothGattServer gattServer;
+    private Context mContext;
 
     //設定Advertiser & 開始
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     public void startAdvertise(Context context) {
-
+        mContext = context;
+        BLEManager.getInstance(context).setBLELog("startAdvertise--");
+        BLEManager.getInstance(context).setBLELog("serviceUUID-"+SERVICE_UUID);
         //BLE設定,Advertiser負責廣播被其他裝置搜尋,GattServer負責連線上後的資料傳輸
         BluetoothManager manager = (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
         BluetoothAdapter adapter = manager.getAdapter();
         advertiser = getAdvertiser(adapter);
         gattServer = getGattServer(context, manager);
+
         Log.d(TAG, "gattServer=>" + gattServer);
         //初始化gatt server底下的service、service下放入Characteristic
         initService();
 
         //Advertiser開始
-        advertiser.startAdvertising(makeAdvertiseSetting(),makeAdvertiseData(),this);
+        advertiser.startAdvertising(makeAdvertiseSetting(), makeAdvertiseData(), this);
+
     }
 
     //Advertiser停止
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     public void stopAdvertise() {
-
+        if(mContext != null){
+            BLEManager.getInstance(mContext).setBLELog("stopAdvertise--");
+        }
         //關閉gatt server
         if (gattServer != null) {
             gattServer.clearServices();
@@ -79,7 +86,7 @@ public class AdvertiseAdaptor extends AdvertiseCallback {
     //GattServer
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
     private BluetoothGattServer getGattServer(Context context, BluetoothManager manager) {
-        BLEServerAdaptor bleserver = new BLEServerAdaptor();
+        BLEServerAdaptor bleserver = new BLEServerAdaptor(context);
         BluetoothGattServer server = manager.openGattServer(context, bleserver);
         bleserver.setBluetoothGattServer(server);
         return server;

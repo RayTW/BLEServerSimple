@@ -13,6 +13,7 @@ public class BLEManager {
     private static BLEManager instance;
     private AdvertiseAdaptor mAdvertiseAdaptorJP = new AdvertiseAdaptor();
     private Context mContext;
+    private OnBLELogListener mOnBLELogListener;
 
     public static BLEManager getInstance(Context context){
         if(instance == null){
@@ -23,6 +24,10 @@ public class BLEManager {
             }
         }
         return instance;
+    }
+
+    public void setOnBLELogListener(OnBLELogListener listener){
+        mOnBLELogListener = listener;
     }
 
     public BLEManager(Context context){
@@ -56,6 +61,16 @@ public class BLEManager {
                 Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
                 activity.startActivityForResult(enableBtIntent, requestCode);
             }
+        }
+    }
+
+    public static interface OnBLELogListener{
+        public void onBLELog(String text);
+    }
+
+    public void setBLELog(String text){
+        if(mOnBLELogListener != null){
+            mOnBLELogListener.onBLELog(text);
         }
     }
 }

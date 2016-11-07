@@ -6,14 +6,34 @@
     android:layout_height="match_parent"
     tools:context=".ui.MainActivity">
 
-    <Button
+
+
+    <LinearLayout
+        android:orientation="vertical"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="startAdvertise"
-        android:id="@+id/startAdvertise" />
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="stopAdvertise"
-        android:id="@+id/stopAdvertise" />
+        android:layout_height="match_parent">
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="startAdvertise"
+            android:id="@+id/startAdvertise" />
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="stopAdvertise"
+            android:id="@+id/stopAdvertise" />
+
+        <TextView
+            android:id="@+id/uuids"
+            android:gravity="left"
+            android:layout_height="fill_parent"
+            android:layout_width="wrap_content"
+            android:maxLines="20"
+            android:lines="20"
+            android:text="Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."></TextView>
+    </LinearLayout>
+
+
+
+
 </LinearLayout>
