@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.TextView;
 
 import com.raytw.android.ble.bleserversimple.BLEManager;
@@ -17,7 +18,7 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         findViewById(R.id.startAdvertise).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -78,5 +79,6 @@ public class MainActivity extends Activity {
     protected void onDestroy() {
         super.onDestroy();
         BLEManager.getInstance(MainActivity.this).stopAdvertiseJP();
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 }

@@ -5,29 +5,34 @@ package com.raytw.android.ble.bleserversimple; /**
 import android.annotation.TargetApi;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
-import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattServer;
 import android.bluetooth.BluetoothGattServerCallback;
 import android.bluetooth.BluetoothGattService;
-import android.bluetooth.BluetoothProfile;
 import android.content.Context;
 import android.os.Build;
 import android.util.Log;
 
-import java.util.List;
+import com.burns.android.ancssample.ANCSGattCallback;
+import com.burns.android.ancssample.ANCSParser;
 
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
 public class BLEServerAdaptor extends BluetoothGattServerCallback {
     private static String TAG = BLEServerAdaptor.class.getSimpleName();
 
     private Context mContext;
+    private ANCSGattCallback mANCSGattCallback;
+    private ANCSParser mANCSHandler;
 
     private BluetoothGattServer bluetoothGattServer;
     public BLEServerAdaptor(Context context) {
         mContext = context;
+        mANCSHandler = ANCSParser.getDefault(context);
+        mANCSGattCallback = new ANCSGattCallback(context, mANCSHandler);
     }
+
+
 
     public void setBluetoothGattServer(BluetoothGattServer gattServer){
         this.bluetoothGattServer = gattServer;
@@ -37,40 +42,47 @@ public class BLEServerAdaptor extends BluetoothGattServerCallback {
     public void onConnectionStateChange(final BluetoothDevice device, int status, int newState) {
         super.onConnectionStateChange(device, status, newState);
 
-        device.connectGatt(mContext, true, new BluetoothGattCallback(){
-
-            @Override
-            public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
-                super.onConnectionStateChange(gatt, status, newState);
-
-                if (newState == BluetoothProfile.STATE_CONNECTED
-                        && status == BluetoothGatt.GATT_SUCCESS) {
-                    printLog("STATE_CONNECTED");
-                    printLog("start discover service");
-
-                    gatt.discoverServices();
-
-                } else if (newState == BluetoothProfile.STATE_DISCONNECTED){
-                    printLog("STATE_DISCONNECTED");
-                }
-            }
-
-            @Override
-            public void onServicesDiscovered(BluetoothGatt gatt, int status) {
-                printLog("onServicesDiscovered---gatt--->" + gatt);
-
-                if(gatt != null){
-                    List<BluetoothGattService> list =  gatt.getServices();
-                    printLog("onServicesDiscovered---serviceSize--->" + list.size());
-                    printLog("onServicesDiscovered---begin---");
-                    for(BluetoothGattService service : list){
-                        printLog( "suuid->" + service.getUuid());
-                    }
-                    printLog("onServicesDiscovered---end---");
-                }
-
-            }
-        });
+        BluetoothGatt gatt = device.connectGatt(mContext, true, mANCSGattCallback);
+//        device.connectGatt(mContext, true, new BluetoothGattCallback(){
+//
+//            @Override
+//            public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
+//                super.onConnectionStateChange(gatt, status, newState);
+//
+//                if (newState == BluetoothProfile.STATE_CONNECTED
+//                        && status == BluetoothGatt.GATT_SUCCESS) {
+//                    printLog("STATE_CONNECTED");
+//                    printLog("start discover service");
+//
+//                    gatt.discoverServices();
+//
+//                } else if (newState == BluetoothProfile.STATE_DISCONNECTED){
+//                    printLog("STATE_DISCONNECTED");
+//                }
+//            }
+//
+//            @Override
+//            public void onServicesDiscovered(BluetoothGatt gatt, int status) {
+//                printLog("onServicesDiscovered---gatt--->" + gatt);
+//
+//                if(gatt != null){
+//                    List<BluetoothGattService> list =  gatt.getServices();
+//                    printLog("onServicesDiscovered---serviceSize--->" + list.size());
+//                    printLog("onServicesDiscovered---begin---");
+//                    for(BluetoothGattService service : list){
+//                        printLog( "suuid->" + service.getUuid());
+//
+//                        if(service.getUuid().toString().toUpperCase().equals("7905F431-B5CE-4E99-A40F-4B1E122D00D0")){
+//                            printLog("find ancs");
+//                            mANCSGattCallback.setBluetoothGatt(gatt);
+//                            mANCSGattCallback.setStateStart();
+//                        }
+//                    }
+//                    printLog("onServicesDiscovered---end---");
+//                }
+//
+//            }
+//        });
     }
 
     @Override
