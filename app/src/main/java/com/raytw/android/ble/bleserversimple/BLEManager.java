@@ -6,14 +6,16 @@ import android.bluetooth.BluetoothManager;
 import android.content.Context;
 import android.content.Intent;
 
+import com.burns.android.ancssample.ANCSListener;
+import com.burns.android.ancssample.OnIOSNotificationListener;
+
 /**
  * Created by leeray on 16/3/16.
  */
 public class BLEManager {
     private static BLEManager instance;
-    private AdvertiseAdaptor mAdvertiseAdaptorJP = new AdvertiseAdaptor();
+    private AdvertiseAdaptor mAdvertiseAdaptor;
     private Context mContext;
-    private OnBLELogListener mOnBLELogListener;
 
     public static BLEManager getInstance(Context context){
         if(instance == null){
@@ -26,13 +28,10 @@ public class BLEManager {
         return instance;
     }
 
-    public void setOnBLELogListener(OnBLELogListener listener){
-        mOnBLELogListener = listener;
-    }
-
     public BLEManager(Context context){
         if(context.getApplicationContext() != null){
             mContext = context.getApplicationContext();
+            mAdvertiseAdaptor = new AdvertiseAdaptor(mContext);
         }else{
             mContext = context;
         }
@@ -42,12 +41,12 @@ public class BLEManager {
     private void initialize() {
     }
 
-    public void startAdvertiseJP(){
-        mAdvertiseAdaptorJP.startAdvertise(mContext);
+    public void startAdvertise(){
+        mAdvertiseAdaptor.startAdvertise(mContext);
     }
 
-    public void stopAdvertiseJP(){
-        mAdvertiseAdaptorJP.stopAdvertise();
+    public void stopAdvertise(){
+        mAdvertiseAdaptor.stopAdvertise();
     }
 
     public void checkBLE(Activity activity, int requestCode){
@@ -64,13 +63,23 @@ public class BLEManager {
         }
     }
 
-    public static interface OnBLELogListener{
-        public void onBLELog(String text);
+    public void addANCSListener(ANCSListener listner){
+        mAdvertiseAdaptor.getBLEServerAdaptor().getANCSGattCallback().addStateListen(listner);
     }
 
-    public void setBLELog(String text){
-        if(mOnBLELogListener != null){
-            mOnBLELogListener.onBLELog(text);
-        }
+    public void removeANCSListener(ANCSListener listner){
+        mAdvertiseAdaptor.getBLEServerAdaptor().getANCSGattCallback().removeStateListen(listner);
+    }
+
+    public void addOnIOSNotificationListener(OnIOSNotificationListener listner){
+        mAdvertiseAdaptor.getBLEServerAdaptor().getANCSGattCallback().addOnIOSNotificationListener(listner);
+    }
+
+    public void removeOnIOSNotificationListener(OnIOSNotificationListener listner){
+        mAdvertiseAdaptor.getBLEServerAdaptor().getANCSGattCallback().removeOnIOSNotificationListener(listner);
+    }
+
+    public void removeAllListeners(){
+        mAdvertiseAdaptor.getBLEServerAdaptor().getANCSGattCallback().removeAllListeners();
     }
 }

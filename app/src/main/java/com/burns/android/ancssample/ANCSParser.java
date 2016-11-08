@@ -1,13 +1,5 @@
 package com.burns.android.ancssample;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-
-import tw.com.elead.util.EZLog;
-import tw.com.elead.util.ToolUtils;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
@@ -15,6 +7,12 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 public class ANCSParser {
 	// ANCS constants
@@ -34,19 +32,6 @@ public class ANCSParser {
 	public final static int EventIDNotificationAdded = 0;
 	public final static int EventIDNotificationModified = 1;
 	public final static int EventIDNotificationRemoved = 2;
-
-	public final static int CategoryIDOther = 0;
-	public final static int CategoryIDIncomingCall = 1;
-	public final static int CategoryIDMissedCall = 2;
-	public final static int CategoryIDVoicemail = 3;
-	public final static int CategoryIDSocial = 4;
-	public final static int CategoryIDSchedule = 5;
-	public final static int CategoryIDEmail = 6;
-	public final static int CategoryIDNews = 7;
-	public final static int CategoryIDHealthAndFitness = 8;
-	public final static int CategoryIDBusinessAndFinance = 9;
-	public final static int CategoryIDLocation = 10;
-	public final static int CategoryIDEntertainment = 11;
 
 	// !ANCS constants
 
@@ -69,13 +54,9 @@ public class ANCSParser {
 	BluetoothGattService mService;
 	Context mContext;
 	private static ANCSParser sInst;
-	
-	private ArrayList<onIOSNotification> mListeners=new ArrayList<onIOSNotification>(); 
-	public interface onIOSNotification{
-		void onIOSNotificationAdd(IOSNotification n);
-		void onIOSNotificationRemove(int uid);
-	}
-	
+
+	private ArrayList<OnIOSNotificationListener> mListeners=new ArrayList<OnIOSNotificationListener>();
+
 	private ANCSParser(Context c) {
 		mContext = c;
 		mHandler = new Handler(c.getMainLooper()) {
@@ -86,7 +67,7 @@ public class ANCSParser {
 					if (mCurData == null) {
 						return;
 					}
-					if (System.currentTimeMillis() >= mCurData.timeExpired) {
+					if (System.currentTimeMillis() >= mCurData.mTimeExpired) {
 		
 						Log.i(TAG,"msg timeout!");
 					}
@@ -119,11 +100,19 @@ public class ANCSParser {
 		};
 	}
 	
-	public void listenIOSNotification(onIOSNotification lis){
-		if(!mListeners.contains(lis))
+	public void addOnIOSNotificationListener(OnIOSNotificationListener lis){
+		if(!mListeners.contains(lis)){
 			mListeners.add(lis);
+		}
 	}
-	
+
+	public void removeOnIOSNotificationListener(OnIOSNotificationListener lis){
+		mListeners.remove(lis);
+	}
+
+	public void removeAllListener(){
+		mListeners.clear();
+	}
 
 	public void setService(BluetoothGattService bgs, BluetoothGatt bg) {
 		mGatt = bg;
@@ -143,56 +132,51 @@ public class ANCSParser {
 
 	private void sendNotification(final IOSNotification noti) {
 		Log.i(TAG,"[Add Notification] : "+noti.uid);
-		for(onIOSNotification lis: mListeners){
+		for(OnIOSNotificationListener lis: mListeners){
 			lis.onIOSNotificationAdd(noti);
 		}
-		//TODO 解析完notication並顯示
-		ToolUtils.makeTextToast(mContext, "收到訊息,title["+noti.title+"],message["+noti.message+"]");
 	}
 	private void cancelNotification(int uid){
 		Log.i(TAG,"[cancel Notification] : "+uid);
-		for(onIOSNotification lis: mListeners){
+		for(OnIOSNotificationListener lis: mListeners){
 			lis.onIOSNotificationRemove(uid);
 		}
 	}
 	
 	private class ANCSData {
-		long timeExpired;
-		int curStep = 0;
-
-		final byte[] notifyData; // 8 bytes
-
-		ByteArrayOutputStream bout;
-		IOSNotification noti;
+		private long mTimeExpired;
+		private int mCurStep = 0;
+		private final byte[] mNotifyData; // 8 bytes
+		private ByteArrayOutputStream mBout;
+		private IOSNotification mNoti;
 
 		ANCSData(byte[] data) {
-			notifyData = data;
-			curStep = 0;
-			timeExpired = System.currentTimeMillis();
-			noti=new  IOSNotification();
+			mNotifyData = data;
+			mCurStep = 0;
+			mTimeExpired = System.currentTimeMillis();
+			mNoti =new  IOSNotification();
 		}
 
 		void clear() {
-			if (bout != null) {
-				bout.reset();
+			if (mBout != null) {
+				mBout.reset();
 			}
-			bout = null;
-			curStep = 0;
+			mBout = null;
+			mCurStep = 0;
 		}
 
 		int getUID() {
-			return (0xff & notifyData[7] << 24) | (0xff & notifyData[6] << 16)
-					| (0xff & notifyData[5] << 8) | (0xff & notifyData[4]);
+			return (0xff & mNotifyData[7] << 24) | (0xff & mNotifyData[6] << 16)
+					| (0xff & mNotifyData[5] << 8) | (0xff & mNotifyData[4]);
 		}
 
 		void finish() {
-			EZLog.dGlobal("finish(");
-			if (null == bout) {
+			if (null == mBout) {
 				return;
 			}
 	
-			final byte[] data = bout.toByteArray();
-			logD(data);
+			final byte[] data = mBout.toByteArray();
+
 			if (data.length < 5) {
 				return; // 
 			}
@@ -211,10 +195,10 @@ public class ANCSParser {
 			}
 
 			// read attributes
-			noti.uid = uid;
+			mNoti.uid = uid;
 			int curIdx = 5; //hard code
 			while (true) {
-				if (noti.isAllInit()) {
+				if (mNoti.isAllInit()) {
 					break; 
 				}
 				if (data.length < curIdx + 3) {
@@ -229,33 +213,27 @@ public class ANCSParser {
 				}
 				String val = new String(data, curIdx, attrLen);//utf-8 encode
 				if (attrId == NotificationAttributeIDTitle) { 
-					noti.title = val;
+					mNoti.title = val;
 				} else if (attrId == NotificationAttributeIDMessage) {
-					noti.message = val;
+					mNoti.message = val;
 				} else if (attrId == NotificationAttributeIDDate) { 
-					noti.date = val;
+					mNoti.date = val;
 				} else if (attrId == NotificationAttributeIDSubtitle) {
-					noti.subtitle = val;
+					mNoti.subtitle = val;
 				} else if (attrId == NotificationAttributeIDMessageSize) {
-					noti.messageSize = val;
+					mNoti.messageSize = val;
 				}
 				curIdx += attrLen;
 			}
-			Log.i(TAG,"noti.title:"+noti.title);
-			Log.i(TAG,"noti.message:"+noti.message);
-			Log.i(TAG,"noti.date:"+noti.date);
-			Log.i(TAG,"noti.subtitle:"+noti.subtitle);
-			Log.i(TAG,"noti.messageSize:"+noti.messageSize);
-			Log.i(TAG,"got a notification! data size = "+data.length);
+
 			mCurData = null;
 //			mHandler.sendEmptyMessage(MSG_DO_NOTIFICATION); // continue next!
-			sendNotification(noti);
+			sendNotification(mNoti);
 		}
 	}
 
 
 	private void processNotificationList() {
-		EZLog.dGlobal("1 processNotificationList==>mCurData" + mCurData);
 		mHandler.removeMessages(MSG_DO_NOTIFICATION);
 		// handle curData!
 		if (mCurData == null) {
@@ -265,46 +243,41 @@ public class ANCSParser {
 
 			mCurData = mPendingNotifcations.remove(0);
 			Log.i(TAG,"ANCS New CurData");
-		} else if (mCurData.curStep == 0) { // parse notify data
-			EZLog.dGlobal("2 processNotificationList==>mCurData" + mCurData);
+		} else if (mCurData.mCurStep == 0) { // parse notify data
 			do {
-				if (mCurData.notifyData == null
-						|| mCurData.notifyData.length != 8) {
+				if (mCurData.mNotifyData == null
+						|| mCurData.mNotifyData.length != 8) {
 					mCurData = null; // ignore
 			
 					Log.i(TAG,"ANCS Bad Head!");
 					break;
 				}
-				if(EventIDNotificationRemoved ==mCurData.notifyData[0]){
-					EZLog.dGlobal("3 processNotificationList==>mCurData" + mCurData);
-					int uid=(mCurData.notifyData[4]&0xff) |
-							(mCurData.notifyData[5]&0xff<<8)|
-							(mCurData.notifyData[6]&0xff<<16)|
-							(mCurData.notifyData[7]&0xff<<24);
+				if(EventIDNotificationRemoved ==mCurData.mNotifyData[0]){
+					int uid=(mCurData.mNotifyData[4]&0xff) |
+							(mCurData.mNotifyData[5]&0xff<<8)|
+							(mCurData.mNotifyData[6]&0xff<<16)|
+							(mCurData.mNotifyData[7]&0xff<<24);
 					cancelNotification(uid);
 					mCurData = null;
 					break;
 				}
-				if (EventIDNotificationAdded != mCurData.notifyData[0]) {
-					EZLog.dGlobal("4 processNotificationList==>mCurData" + mCurData);
+				if (EventIDNotificationAdded != mCurData.mNotifyData[0]) {
 					mCurData = null; // ignore
 					Log.i(TAG,"ANCS NOT Add!");
 					break;
 				}
-				EZLog.dGlobal("5 processNotificationList==>mCurData" + mCurData);
 				// get attribute if needed!
 				BluetoothGattCharacteristic cha = mService	
 						.getCharacteristic(GattConstant.Apple.sUUIDControl);
-				EZLog.dGlobal("6 processNotificationList==>cha" + cha);
 				if (null != cha ) {
 					ByteArrayOutputStream bout = new ByteArrayOutputStream();
 	
 					bout.write((byte) 0); 
 			
-					bout.write(mCurData.notifyData[4]);
-					bout.write(mCurData.notifyData[5]);
-					bout.write(mCurData.notifyData[6]);
-					bout.write(mCurData.notifyData[7]);
+					bout.write(mCurData.mNotifyData[4]);
+					bout.write(mCurData.mNotifyData[5]);
+					bout.write(mCurData.mNotifyData[6]);
+					bout.write(mCurData.mNotifyData[7]);
 
 			
 					bout.write(NotificationAttributeIDTitle);
@@ -334,30 +307,27 @@ public class ANCSParser {
 					cha.setValue(data);
 					mGatt.writeCharacteristic(cha);
 					Log.i(TAG,"request ANCS(CP) the data of Notification. = ");
-					mCurData.curStep = 1;	
-					mCurData.bout = new ByteArrayOutputStream();
-					mCurData.timeExpired = System.currentTimeMillis() + TIMEOUT;
+					mCurData.mCurStep = 1;
+					mCurData.mBout = new ByteArrayOutputStream();
+					mCurData.mTimeExpired = System.currentTimeMillis() + TIMEOUT;
 //					mHandler.removeMessages(MSG_CHECK_TIME);
 //					mHandler.sendEmptyMessageDelayed(MSG_CHECK_TIME, TIMEOUT);
 					return;
 				} else {
 					Log.i(TAG,"ANCS has No Control Point !");
 					// has no control!// just vibrate ...
-					mCurData.bout = null;
-					mCurData.curStep = 1;
+					mCurData.mBout = null;
+					mCurData.mCurStep = 1;
 				}
 
 			} while (false);
-		} else if (mCurData.curStep == 1) {
+		} else if (mCurData.mCurStep == 1) {
 			// check if finished!	
 //			mCurData.finish();
-			EZLog.dGlobal("7 processNotificationList==>mCurData" + mCurData);
 			return;
 		} else {
-			EZLog.dGlobal("8 processNotificationList==>mCurData" + mCurData);
 			return;
 		}
-		EZLog.dGlobal("9 processNotificationList==>mCurData" + mCurData);
 		mHandler.sendEmptyMessage(MSG_DO_NOTIFICATION); // do next step
 	}
 
@@ -370,7 +340,7 @@ public class ANCSParser {
 		}
 		try {
 			mHandler.removeMessages(MSG_FINISH);
-			mCurData.bout.write(data);
+			mCurData.mBout.write(data);
 			mHandler.sendEmptyMessageDelayed(MSG_FINISH, FINISH_DELAY);
 		} catch (IOException e) {
 			Log.i(TAG,e.toString());
@@ -392,7 +362,7 @@ public class ANCSParser {
 			Log.i(TAG,"bad ANCS notification data");
 			return;
 		}
-		logD(data);
+
 		Message msg = mHandler.obtainMessage(MSG_ADD_NOTIFICATION);
 		msg.obj = data;
 		msg.sendToTarget();
@@ -401,14 +371,4 @@ public class ANCSParser {
 	public void reset() {
 		mHandler.sendEmptyMessage(MSG_RESET);
 	}
-	
-	void logD(byte[] d){
-		StringBuffer sb=new StringBuffer();
-		int len = d.length;
-		for(int i=0;i<len;i++){
-			sb.append(d[i]+", ");
-		}
-		Log.i(TAG,"log Data size["+len+"] : "+sb);
-	}
-	
 }
