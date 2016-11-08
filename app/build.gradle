@@ -7,9 +7,9 @@ android {
     defaultConfig {
         applicationId "com.raytw.android.ble.bleserversimple"
         minSdkVersion 21
-        targetSdkVersion 23
+        targetSdkVersion 21
         versionCode 1
-        versionName "1.0"
+        versionName "1.0.0.20161107001"
     }
     buildTypes {
         release {
