@@ -88,8 +88,9 @@ public class ANCSParser {
 				} else if (MSG_ERR == what) {
 	
 					Log.i(TAG,"error,skip_cur_data");
+
 					mCurData.clear();
-					mCurData = null;
+					removeCurData();
 					mHandler.sendEmptyMessage(MSG_DO_NOTIFICATION);
 				} else if (MSG_FINISH == what) {
 					Log.i(TAG,"msg data.finish()");
@@ -226,7 +227,7 @@ public class ANCSParser {
 				curIdx += attrLen;
 			}
 
-			mCurData = null;
+			removeCurData();
 //			mHandler.sendEmptyMessage(MSG_DO_NOTIFICATION); // continue next!
 			sendNotification(mNoti);
 		}
@@ -248,7 +249,7 @@ public class ANCSParser {
 			do {
 				if (mCurData.mNotifyData == null
 						|| mCurData.mNotifyData.length != 8) {
-					mCurData = null; // ignore
+					removeCurData(); // ignore
 			
 					Log.i(TAG,"ANCS Bad Head!");
 					break;
@@ -259,11 +260,11 @@ public class ANCSParser {
 							(mCurData.mNotifyData[6]&0xff<<16)|
 							(mCurData.mNotifyData[7]&0xff<<24);
 					cancelNotification(uid);
-					mCurData = null;
+					removeCurData();
 					break;
 				}
 				if (EventIDNotificationAdded != mCurData.mNotifyData[0]) {
-					mCurData = null; // ignore
+					removeCurData(); // ignore
 					Log.i(TAG,"ANCS NOT Add!");
 					break;
 				}
@@ -347,6 +348,11 @@ public class ANCSParser {
 		} catch (IOException e) {
 			Log.i(TAG,e.toString());
 		}
+	}
+
+	private void removeCurData(){
+		mPendingNotifcations.clear();
+		mCurData = null;
 	}
 
 	void onWrite(BluetoothGattCharacteristic characteristic, int status) {
