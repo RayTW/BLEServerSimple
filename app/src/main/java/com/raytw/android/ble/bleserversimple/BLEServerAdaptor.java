@@ -23,10 +23,19 @@ public class BLEServerAdaptor extends BluetoothGattServerCallback {
 
     private Context mContext;
     private ANCSGattCallback mANCSGattCallback;
+    private BluetoothGatt mBluetoothGatt;
 
     public BLEServerAdaptor(Context context) {
         mContext = context;
         mANCSGattCallback = new ANCSGattCallback(context);
+        mANCSGattCallback.setOnGattDisconnectListener(new ANCSGattCallback.OnGattDisconnectListener() {
+            @Override
+            public void onGattDisconnectListener(BluetoothGatt gatt) {
+                if(mBluetoothGatt == gatt){
+                    closeGatt();
+                }
+            }
+        });
     }
 
     public ANCSGattCallback getANCSGattCallback(){
@@ -40,10 +49,26 @@ public class BLEServerAdaptor extends BluetoothGattServerCallback {
         if (newState == BluetoothProfile.STATE_CONNECTED
                 && status == BluetoothGatt.GATT_SUCCESS) {
             printLog("STATE_CONNECTED");
-            device.connectGatt(mContext, true, mANCSGattCallback);
-
+            mBluetoothGatt = device.connectGatt(mContext, false, mANCSGattCallback);
         } else if (newState == BluetoothProfile.STATE_DISCONNECTED){
             printLog("STATE_DISCONNECTED");
+
+            if(mBluetoothGatt != null && mBluetoothGatt.getDevice() == device){
+                closeGatt();
+            }
+        }
+    }
+
+    private synchronized void closeGatt(){
+        printLog("closeGatt");
+        // 防止出現status 133
+        if(mBluetoothGatt != null){
+            try{
+                mBluetoothGatt.close();
+                mBluetoothGatt = null;
+            }catch (Exception e){
+                e.printStackTrace();
+            }
         }
     }
 

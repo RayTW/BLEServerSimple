@@ -235,6 +235,7 @@ public class ANCSParser {
 
 	private void processNotificationList() {
 		mHandler.removeMessages(MSG_DO_NOTIFICATION);
+
 		// handle curData!
 		if (mCurData == null) {
 			if (mPendingNotifcations.size() == 0) {
@@ -322,8 +323,9 @@ public class ANCSParser {
 
 			} while (false);
 		} else if (mCurData.mCurStep == 1) {
+			Log.i(TAG, "mCurData.finish()");
 			// check if finished!	
-//			mCurData.finish();
+			mCurData.finish();
 			return;
 		} else {
 			return;

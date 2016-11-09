@@ -19,15 +19,19 @@ public class ANCSGattCallback extends BluetoothGattCallback {
     private static ANCSParser sANCSHandler;
     private Context mContext;
     private BleStatus mBleState;
-    private BluetoothGatt mBluetoothGatt;
     private BluetoothGattService mANCSservice;
     private boolean mWritedNS;
     private boolean mWriteNSDespOk;
     private ArrayList<ANCSListener> mStateListeners = new ArrayList<ANCSListener>();
+    private OnGattDisconnectListener mOnGattDisconnectListener;
 
     public ANCSGattCallback(Context context) {
         mContext = context;
         sANCSHandler = ANCSParser.getDefault(context);
+    }
+
+    public void setOnGattDisconnectListener(OnGattDisconnectListener listener){
+        mOnGattDisconnectListener = listener;
     }
 
     public void addStateListen(ANCSListener sl) {
@@ -62,11 +66,11 @@ public class ANCSGattCallback extends BluetoothGattCallback {
         for (ANCSListener sl : mStateListeners) {
             sl.onStateChanged(mBleState);
         }
-        if (null != mBluetoothGatt) {
-            mBluetoothGatt.disconnect();
-            mBluetoothGatt.close();
-        }
-        mBluetoothGatt = null;
+//        if (null != mBluetoothGatt) {
+//            mBluetoothGatt.disconnect();
+//            mBluetoothGatt.close();
+//        }
+//        mBluetoothGatt = null;
         mANCSservice = null;
         mStateListeners.clear();
     }
@@ -100,7 +104,7 @@ public class ANCSGattCallback extends BluetoothGattCallback {
     @Override
     public void onConnectionStateChange(BluetoothGatt gatt, int status,
                                         int newState) {
-        Log.i(TAG, "onConnectionStateChange" + "newState " + newState + "status:" + status);
+        Log.i(TAG, "onConnectionStateChange,newState " + newState + "status:" + status);
         try{
             mBleState = BleStatus.values()[newState];
         }catch(Exception e){
@@ -110,11 +114,16 @@ public class ANCSGattCallback extends BluetoothGattCallback {
 
         if (newState == BluetoothProfile.STATE_CONNECTED
                 && status == BluetoothGatt.GATT_SUCCESS) {
-            mBluetoothGatt = gatt;
+//            mBluetoothGatt = gatt;
             mBleState = BleStatus.BUILD_DISCOVER_SERVICE;
             notifyListeners();
-            mBluetoothGatt.discoverServices();
-        } else if (0 == newState/* && mDisconnectReq*/ && mBluetoothGatt != null) {
+            gatt.discoverServices();
+        } else {
+            Log.i(TAG, "onConnectionStateChange,failure");
+            if(mOnGattDisconnectListener != null){
+                mOnGattDisconnectListener.onGattDisconnectListener(gatt);
+            }
+
         }
     }
 
@@ -139,12 +148,17 @@ public class ANCSGattCallback extends BluetoothGattCallback {
         mBleState = BleStatus.BUILD_FIND_ANCS_SERVICE;
         notifyListeners();
 
+        mANCSservice = ancs;
+        sANCSHandler.setService(ancs, gatt);
+        ANCSParser.get().reset();
+        Log.i(TAG, "found ANCS service & set DS character,descriptor OK !");
+
         BluetoothGattCharacteristic DScha = ancs.getCharacteristic(GattConstant.Apple.sUUIDDataSource);
         if (DScha == null) {
             Log.i(TAG, "cannot find DataSource(DS) characteristic");
             return;
         }
-        boolean registerDS = mBluetoothGatt.setCharacteristicNotification(DScha, true);
+        boolean registerDS = gatt.setCharacteristicNotification(DScha, true);
         if (!registerDS) {
             Log.i(TAG, " Enable (DS) notifications failed. ");
             return;
@@ -152,7 +166,7 @@ public class ANCSGattCallback extends BluetoothGattCallback {
         BluetoothGattDescriptor descriptor = DScha.getDescriptor(GattConstant.DESCRIPTOR_UUID);
         if (null != descriptor) {
             boolean r = descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-            boolean rr = mBluetoothGatt.writeDescriptor(descriptor);
+            boolean rr = gatt.writeDescriptor(descriptor);
 
             Log.i(TAG, "Descriptoer setvalue " + r + "writeDescriptor() " + rr);
         } else {
@@ -163,11 +177,6 @@ public class ANCSGattCallback extends BluetoothGattCallback {
         if (DScha == null) {
             Log.i(TAG, "can not find ANCS's ControlPoint cha ");
         }
-
-        mANCSservice = ancs;
-        sANCSHandler.setService(ancs, mBluetoothGatt);
-        ANCSParser.get().reset();
-        Log.i(TAG, "found ANCS service & set DS character,descriptor OK !");
     }
 
     @Override//the result of a descriptor write operation.
@@ -181,6 +190,8 @@ public class ANCSGattCallback extends BluetoothGattCallback {
             return;
         }
         if (status != BluetoothGatt.GATT_SUCCESS){
+            mBleState = BleStatus.BUILD_ANCS_DESCRIPTOR_WRITE_ERROR;
+            notifyListeners();
             return;
         }
 
@@ -200,7 +211,7 @@ public class ANCSGattCallback extends BluetoothGattCallback {
                 Log.i(TAG, "can not find ANCS's NS cha");
                 return;
             }
-            boolean registerNS = mBluetoothGatt.setCharacteristicNotification(
+            boolean registerNS = gatt.setCharacteristicNotification(
                     cha, true);
             if (!registerNS) {
                 Log.i(TAG, " Enable (NS) notifications failed  ");
@@ -210,7 +221,7 @@ public class ANCSGattCallback extends BluetoothGattCallback {
             BluetoothGattDescriptor desp = cha.getDescriptor(GattConstant.DESCRIPTOR_UUID);
             if (null != desp) {
                 boolean r = desp.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-                boolean rr = mBluetoothGatt.writeDescriptor(desp);
+                boolean rr = gatt.writeDescriptor(desp);
                 mWriteNSDespOk = rr;
                 Log.i(TAG, "(NS)Descriptor.setValue(): " + r + ",writeDescriptor(): " + rr);
             } else {
@@ -227,5 +238,9 @@ public class ANCSGattCallback extends BluetoothGattCallback {
         for (ANCSListener sl : mStateListeners) {
             sl.onStateChanged(mBleState);
         }
+    }
+
+    public static interface OnGattDisconnectListener{
+        void onGattDisconnectListener(BluetoothGatt gatt);
     }
 }
