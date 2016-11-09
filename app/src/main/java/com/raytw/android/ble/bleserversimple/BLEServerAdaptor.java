@@ -59,9 +59,10 @@ public class BLEServerAdaptor extends BluetoothGattServerCallback {
         }
     }
 
-    private synchronized void closeGatt(){
+    private void closeGatt(){
         printLog("closeGatt");
         // 防止出現status 133
+        //參考 : http://www.loverobots.cn/android-ble-connection-solution-bluetoothgatt-status-133.html
         if(mBluetoothGatt != null){
             try{
                 mBluetoothGatt.close();

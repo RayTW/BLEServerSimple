@@ -148,9 +148,6 @@ public class ANCSGattCallback extends BluetoothGattCallback {
         mBleState = BleStatus.BUILD_FIND_ANCS_SERVICE;
         notifyListeners();
 
-        mANCSservice = ancs;
-        sANCSHandler.setService(ancs, gatt);
-        ANCSParser.get().reset();
         Log.i(TAG, "found ANCS service & set DS character,descriptor OK !");
 
         BluetoothGattCharacteristic DScha = ancs.getCharacteristic(GattConstant.Apple.sUUIDDataSource);
@@ -177,6 +174,10 @@ public class ANCSGattCallback extends BluetoothGattCallback {
         if (DScha == null) {
             Log.i(TAG, "can not find ANCS's ControlPoint cha ");
         }
+
+        mANCSservice = ancs;
+        sANCSHandler.setService(ancs, gatt);
+        ANCSParser.get().reset();
     }
 
     @Override//the result of a descriptor write operation.
