@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
+import android.text.method.ScrollingMovementMethod;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.TextView;
@@ -32,6 +33,7 @@ public class MainActivity extends Activity {
         findViewById(R.id.startAdvertise).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                appendText("startAdvertise");
                 BLEManager.getInstance(MainActivity.this).stopAdvertise();
                 BLEManager.getInstance(MainActivity.this).startAdvertise();
             }
@@ -40,13 +42,14 @@ public class MainActivity extends Activity {
         findViewById(R.id.stopAdvertise).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
+                appendText("stopAdvertise");
                 BLEManager.getInstance(MainActivity.this).stopAdvertise();
             }
         });
 
         mShowBleLogs = (TextView)findViewById(R.id.uuids);
         mShowBleLogs.setText("");
+        mShowBleLogs.setMovementMethod(new ScrollingMovementMethod());
 
         initBLEListener();
     }

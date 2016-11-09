@@ -39,7 +39,7 @@ public class BLEServerAdaptor extends BluetoothGattServerCallback {
 
         if (newState == BluetoothProfile.STATE_CONNECTED
                 && status == BluetoothGatt.GATT_SUCCESS) {
-
+            printLog("STATE_CONNECTED");
             device.connectGatt(mContext, true, mANCSGattCallback);
 
         } else if (newState == BluetoothProfile.STATE_DISCONNECTED){
