@@ -89,10 +89,10 @@ public class ANCSGattCallback extends BluetoothGattCallback {
             byte[] data = cha.getValue();
             sANCSHandler.onNotification(data);
 
-            mBleState = BleStatus.BUILD_NOTIFY;//6
-            for (ANCSListener sl : mStateListeners) {
-                sl.onStateChanged(mBleState);
-            }
+//            mBleState = BleStatus.BUILD_NOTIFY;//6
+//            for (ANCSListener sl : mStateListeners) {
+//                sl.onStateChanged(mBleState);
+//            }
         } else if (uuid.equals(GattConstant.Apple.sUUIDDataSource)) {
 
             byte[] data = cha.getValue();
