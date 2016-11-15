@@ -1,6 +1,8 @@
 package com.burns.android.ancssample.util;
 
 import android.content.Context;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.widget.Toast;
 
 /**
@@ -22,5 +24,23 @@ public class Utility {
 
     public static void showText(Context context, CharSequence text, int duration){
         Toast.makeText(context, text, duration).show();
+    }
+
+    public static PackageInfo getPackageInfo(Context context){
+        try {
+            return context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static String getVersionName(Context context){
+        PackageInfo info = getPackageInfo(context);
+
+        if(info != null){
+            return info.versionName;
+        }
+        return "";
     }
 }

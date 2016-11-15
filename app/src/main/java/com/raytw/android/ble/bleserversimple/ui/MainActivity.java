@@ -23,12 +23,15 @@ import com.raytw.android.ble.bleserversimple.R;
 public class MainActivity extends Activity {
     private static final int REQUEST_ENABLE_BT = 1;
     private TextView mShowBleLogs;
+    private TextView mShowAppInfo;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+        initView();
 
         findViewById(R.id.startAdvertise).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -47,11 +50,20 @@ public class MainActivity extends Activity {
             }
         });
 
-        mShowBleLogs = (TextView)findViewById(R.id.uuids);
-        mShowBleLogs.setText("");
+
         mShowBleLogs.setMovementMethod(new ScrollingMovementMethod());
 
         initBLEListener();
+
+
+        appendInfo("version:" + Utility.getVersionName(this));
+    }
+
+    private void initView(){
+        mShowAppInfo = (TextView)findViewById(R.id.info);
+        mShowBleLogs = (TextView)findViewById(R.id.uuids);
+        mShowBleLogs.setText("");
+        mShowAppInfo.setText("");
     }
 
     //註冊接收到ancs通知
@@ -59,19 +71,19 @@ public class MainActivity extends Activity {
         BLEManager.getInstance(this).addOnIOSNotificationListener(new OnIOSNotificationListener() {
             @Override
             public void onIOSNotificationAdd(IOSNotification noti) {
-                appendText("add,title["+noti.title+"],msg["+noti.message+"]");
+                appendText("add,title[" + noti.title + "],msg[" + noti.message + "]");
 
                 NotificationCompat.Builder build = new NotificationCompat.Builder(MainActivity.this)
-		.setSmallIcon(R.drawable.ic_launcher)
+                        .setSmallIcon(R.drawable.ic_launcher)
                         .setContentTitle(noti.title)
                         .setContentText(noti.message);
                 ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).notify(noti.uid, build.build());
-                Utility.showText(MainActivity.this, "title["+noti.title+"],msg["+noti.message+"]", Toast.LENGTH_SHORT);
+                Utility.showText(MainActivity.this, "title[" + noti.title + "],msg[" + noti.message + "]", Toast.LENGTH_SHORT);
             }
 
             @Override
             public void onIOSNotificationRemove(int uid) {
-                appendText("remove,noti,uid["+uid+"]");
+                appendText("remove,noti,uid[" + uid + "]");
                 ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(uid);
             }
         });
@@ -79,7 +91,7 @@ public class MainActivity extends Activity {
         BLEManager.getInstance(this).addANCSListener(new ANCSListener() {
             @Override
             public void onStateChanged(BleStatus state) {
-                appendText("BleStatus,["+state+"]");
+                appendText("BleStatus,[" + state + "]");
             }
         });
     }
@@ -88,14 +100,28 @@ public class MainActivity extends Activity {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                if(mShowBleLogs.getText().length() != 0){
+                if (mShowBleLogs.getText().length() != 0) {
                     mShowBleLogs.append("\n" + text);
-                }else{
+                } else {
                     mShowBleLogs.append(text);
                 }
             }
         });
     }
+
+    private void appendInfo(final String text){
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (mShowAppInfo.getText().length() != 0) {
+                    mShowAppInfo.append("\n" + text);
+                } else {
+                    mShowAppInfo.append(text);
+                }
+            }
+        });
+    }
+
 
     @Override
     protected void onResume() {
@@ -104,6 +130,7 @@ public class MainActivity extends Activity {
         // Ensures Bluetooth is enabled on the device.  If Bluetooth is not currently enabled,
         // fire an intent to display a dialog asking the user to grant permission to enable it.
         BLEManager.getInstance(this).checkBLE(this, REQUEST_ENABLE_BT);
+        appendInfo("isMultipleAdvertisementSupported:" + BLEManager.getInstance(this).getBluetoothAdapter().isMultipleAdvertisementSupported());
     }
 
     @Override

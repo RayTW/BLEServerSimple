@@ -63,6 +63,11 @@ public class BLEManager {
         }
     }
 
+    public BluetoothAdapter getBluetoothAdapter(){
+        BluetoothManager manager = (BluetoothManager) mContext.getSystemService(Context.BLUETOOTH_SERVICE);
+        return manager.getAdapter();
+    }
+
     public void addANCSListener(ANCSListener listner){
         mAdvertiseAdaptor.getBLEServerAdaptor().getANCSGattCallback().addStateListen(listner);
     }
